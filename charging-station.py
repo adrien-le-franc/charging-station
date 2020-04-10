@@ -21,9 +21,9 @@ class ChargingStation:
         self.pmax_slow = 3
         self.cmax = 40*4 ## Maximal capacity of the CS when the 4 slots are used
 
-    # Version naive : on suppose que toutes les voitures sont là 24/24 juste pour voir l'update de leur batteries
-    # Donc deux voitures sur le fast et deux sur le slow et comme les voitures ne partent pas on oublie la pénalité de 5e si elle ne sont pas chargées suffisemment
-    # Pas de V2G également
+    # First Version : Cars are at the station 24 7, it's juste to see how update the batteries
+    # Two cars on fast and two on slow. Since the car do not mouve from the charging station there is non fine of 5e
+    # No V2G neither
 
     def update_batterie_stock(self,time,load_battery):
 
@@ -80,11 +80,3 @@ class ChargingStation:
         load = self.update_batterie_stock(time, load_battery)
         for i in range(2):
             self.load[time] += load["slow"][i] + load["fast"][i]
-
-##
-
-CS = ChargingStation()
-t = 0
-load_battery = {"fast" : np.zeros((48,2)),"slow" : np.zeros((48,2))}
-load_battery = CS.update_batterie_stock(t,load_battery)
-print(load_battery)
