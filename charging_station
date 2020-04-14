@@ -121,8 +121,8 @@ class ChargingStation:
         #self.depart = {"slow" : np.array([15,15]), "fast" : np.array([15,15])} # Time of departure of every cars
         #self.arrival = {"slow" : np.array([35,35]), "fast" : np.array([35,35])} # Time of arrival of every cars
         #Real fonction:
-        depart_a_t = data_senario[depart_a_t]
-        arrive_a_t = data_senario[arrive_a_t]
+        depart_a_t = data_senario["depart_a_t"]
+        arrive_a_t = data_senario["arrive_a_t""]
         for i in range(4):
             if depart_a_t[i]==1 and i<=1:
                 self.depart["slow"][i]=time
