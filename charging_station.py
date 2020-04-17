@@ -63,6 +63,12 @@ class ChargingStation:
 
         for speed in ["slow","fast"] :
             for i in range(2):
+                if abs(load_battery[speed][i]) >= p_max[speed][i]:
+                    load_battery[speed][i] = p_max[speed][i]*np.sign(load_battery[speed][i])
+            # Can't put more power than p_max
+
+        for speed in ["slow","fast"] :
+            for i in range(2):
                 self.battery_stock[speed][time+1][i]=new_stock[speed][i]
             # Update of batteries stocks
                 if time == self.arrival[speed][i]-1:
@@ -95,7 +101,7 @@ class ChargingStation:
         # Acctualise how many cars and which are at the station at t = time.
 
 
-    def penality(self,time):
+    def penalty(self,time):
         for speed in ["slow","fast"] :
             for i in range(2):
                 if time == self.depart[speed][i] and self.battery_stock[speed][time][i]/40 < 25:
@@ -146,5 +152,5 @@ class ChargingStation:
         load = self.update_battery_stock(time, load_battery)
         for i in range(2):
             self.load[time] += load["slow"][i] + load["fast"][i]
-        self.penality(time)
+        self.penalty(time)
         return self.load[time]
