@@ -6,10 +6,10 @@ from charging_station import ChargingStation
 charging_station = ChargingStation()
 
 for t in range(48):
+    charging_station.observe(t,{"departures" : [15,15,15,15],"arrivals": [35,35,35,35]},{"internal":0,"external_sale":0,"external_purchase":0},0)
     load = charging_station.compute_load(t)
-    charging_station.observe(t,0,0)
     charging_station.penality(t)
     print (load)
-print(charging_station.battery_stock)
+print(charging_station.bill)
 
 print("tests passed !")
