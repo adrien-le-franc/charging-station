@@ -63,11 +63,6 @@ class ChargingStation:
 
         for speed in ["slow","fast"] :
             for i in range(2):
-                if abs(load_battery[speed][i]) >= p_max[speed][i] :
-                    load_battery[speed][i] = p_max[speed][i]*np.sign(load_battery[speed][i])
-
-        for speed in ["slow","fast"] :
-            for i in range(2):
                 self.battery_stock[speed][time+1][i]=new_stock[speed][i]
             # Update of batteries stocks
                 if time == self.arrival[speed][i]-1:
@@ -84,17 +79,17 @@ class ChargingStation:
         s = 0
         for i in range(self.nb_slow_max):
             if (self.depart["slow"][i]<time) and (self.arrival["slow"][i]>time):
-                s+=1
                 self.here["slow"][i]=0
             else:
                 self.here["slow"][i]=1
+                s+=1
         f = 0
         for j in range(self.nb_fast_max):
             if (self.depart["fast"][j]<time) and (self.arrival["fast"][j]>time):
-                f+=1
                 self.here["fast"][j]=0
             else:
                 self.here["fast"][j]=1
+                f+=1
         self.nb_slow = s
         self.nb_fast = f
         # Acctualise how many cars and which are at the station at t = time.
