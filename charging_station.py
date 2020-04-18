@@ -22,6 +22,7 @@ class ChargingStation:
         self.nb_fast = 2
         self.pmax_fast = 22
         self.pmax_slow = 3
+        self.pmax_station = 22*2+3*2
         self.cmax = 40*4 # Maximal capacity of the CS when the 4 slots are used
         self.depart = {"slow" : np.zeros(2), "fast" : np.zeros(2)} # Time of departure of every cars
         self.arrival = {"slow" : np.zeros(2), "fast" : np.zeros(2)} # Time of arrival of every cars
@@ -33,6 +34,7 @@ class ChargingStation:
         p_max = {"slow" : [3*self.here["slow"][0],3*self.here["slow"][1]], "fast" : [22*self.here["fast"][0],22*self.here["fast"][1]]}
         c_max = {"slow" : [40*self.here["slow"][0],40*self.here["slow"][1]], "fast" : [40*self.here["fast"][0],40*self.here["fast"][1]]}
         # p_max and c_max depend on whether the car is here or not.
+        self.pmax_station=self.pmax_fast*self.nb_fast + self.pmax_slow*self.nb_slow
         for speed in ["slow","fast"] :
             for i in range(2):
                 if abs(load_battery[speed][i]) >= p_max[speed][i]:
@@ -111,6 +113,11 @@ class ChargingStation:
 
     def take_decision(self, time):
         load_battery = {"fast" : 5*np.ones(2),"slow" : 5*np.ones(2)}
+        for speed in ["slow","fast"] :
+            for i in range(2):
+                if self.here[speed][i]==0:
+                    load_battery[speed][i]=0
+        #this loop put load_battery at 0 if the car isn't here
         # TO BE COMPLETED
         # Have to return load_battery to put in update_batterie_stock to get the load.
         # load_battery must be in the following format : {"fast" : [load_car_fast_1,load_car_fast_2],"slow" : [load_car_slow_1,load_car_slow_2]}
@@ -133,8 +140,9 @@ class ChargingStation:
             self.prices["internal"].append(price["internal"])
             self.prices["external_sale"].append(price["external_sale"])
             self.prices["external_purchase"].append(price["external_purchase"])
-
             self.imbalance.append(imbalance)
+        self.nb_cars(time) # We check what cars is here
+
 
 
     def reset(self):
@@ -146,6 +154,9 @@ class ChargingStation:
         self.depart = {"slow" : np.zeros(2), "fast" : np.zeros(2)}
         self.arrival = {"slow" : np.zeros(2), "fast" : np.zeros(2)}
         self.prices = {"internal" : [],"external_purchase" : [],"external_sale" : []}
+        self.nb_slow = 2 # Number of Stations Fast and Slow currently used
+        self.nb_fast = 2
+        self.imbalance=[]
 
     def compute_load(self,time):
         load_battery = self.take_decision(time) # How you charge or discharge is the players choice
