@@ -36,12 +36,14 @@ class Player:
         c_max = {"slow" : [40*self.here["slow"][0],40*self.here["slow"][1]], "fast" : [40*self.here["fast"][0],40*self.here["fast"][1]]}
         # p_max and c_max depend on whether the car is here or not.
         self.p_station = 0
+
         for speed in ["slow","fast"] :
             for i in range(2):
+                if self.here[speed][i]==0:
+                    load_battery[speed][i] = 0
                 if abs(load_battery[speed][i]) >= p_max[speed][i]:
                     load_battery[speed][i] = p_max[speed][i]*np.sign(load_battery[speed][i])
             # Can't put more power than p_max
-
 
             new_stock = { "slow" : [0,0], "fast" : [0,0] }
 
@@ -124,6 +126,7 @@ class Player:
         # Be carefull if the sum in load_battery is over pmax_station = 40 then the cars wont be charged as you want.
         # Have to return load_battery to put in update_batterie_stock to get the load.
         # load_battery must be in the following format : {"fast" : [load_car_fast_1,load_car_fast_2],"slow" : [load_car_slow_1,load_car_slow_2]}
+
         return load_battery
 
 
@@ -145,6 +148,7 @@ class Player:
             self.prices["external_purchase"].append(price["external_purchase"])
 
             self.imbalance.append(imbalance)
+        self.nb_cars(time)
 
 
     def reset(self):
