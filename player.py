@@ -9,13 +9,13 @@ class Player:
 
     def __init__(self):
         self.dt = 0.5
-        self.nb_t = int(24/self.dt)
+        self.horizon = int(24/self.dt)
         self.prices = {"internal" : [],"external_purchase" : [],"external_sale" : []}
         self.efficiency = 0.95
-        self.bill = np.zeros(self.nb_t) # Where 5e penalities will be stocked
-        self.load = np.zeros(self.nb_t) # List l4
-        self.load_battery_periode = {"fast" : np.zeros((self.nb_t,2)),"slow" : np.zeros((self.nb_t,2))} # How the player wants to charge/discharge the veicules
-        self.battery_stock = {"slow" : np.zeros((self.nb_t+1,2)), "fast" : np.zeros((self.nb_t+1,2))} # State of the batteries
+        self.bill = np.zeros(self.horizon) # Where 5e penalities will be stocked
+        self.load = np.zeros(self.horizon) # List l4
+        self.load_battery_periode = {"fast" : np.zeros((self.horizon,2)),"slow" : np.zeros((self.horizon,2))} # How the player wants to charge/discharge the veicules
+        self.battery_stock = {"slow" : np.zeros((self.horizon+1,2)), "fast" : np.zeros((self.horizon+1,2))} # State of the batteries
         self.nb_fast_max = 2 # Number of Stations Fasts and Lows max
         self.nb_slow_max = 2
         self.nb_slow = 2 # Number of Stations Fast and Slow currently used
@@ -23,8 +23,8 @@ class Player:
         self.pmax_fast = 22
         self.pmax_slow = 3
         self.cmax = 40*4 # Maximal capacity of the CS when the 4 slots are used
-        self.depart = {"slow" : np.zeros(2), "fast" : np.zeros(2)} # Time of departure of every cars
-        self.arrival = {"slow" : np.zeros(2), "fast" : np.zeros(2)} # Time of arrival of every cars
+        self.depart = {"slow" : np.array([self.horizon-1,self.horizon-1]), "fast" : np.array([self.horizon-1,self.horizon-1])} # Time of departure of every cars, initialize at the end of the day
+        self.arrival = {"slow" : np.array([self.horizon-1,self.horizon-1]), "fast" : np.array([self.horizon-1,self.horizon-1])} # Time of arrival of every cars, initialize at the end of the day
         self.here = {"slow" : np.ones(2), "fast" : np.ones(2)}
         self.imbalance=[]
         self.pmax_station = 40
@@ -36,14 +36,12 @@ class Player:
         c_max = {"slow" : [40*self.here["slow"][0],40*self.here["slow"][1]], "fast" : [40*self.here["fast"][0],40*self.here["fast"][1]]}
         # p_max and c_max depend on whether the car is here or not.
         self.p_station = 0
-
         for speed in ["slow","fast"] :
             for i in range(2):
-                if self.here[speed][i]==0:
-                    load_battery[speed][i] = 0
                 if abs(load_battery[speed][i]) >= p_max[speed][i]:
                     load_battery[speed][i] = p_max[speed][i]*np.sign(load_battery[speed][i])
             # Can't put more power than p_max
+
 
             new_stock = { "slow" : [0,0], "fast" : [0,0] }
 
@@ -126,48 +124,49 @@ class Player:
         # Be carefull if the sum in load_battery is over pmax_station = 40 then the cars wont be charged as you want.
         # Have to return load_battery to put in update_batterie_stock to get the load.
         # load_battery must be in the following format : {"fast" : [load_car_fast_1,load_car_fast_2],"slow" : [load_car_slow_1,load_car_slow_2]}
-
         return load_battery
 
 
-    def observe(self, time, data, price, imbalance):
-
-        self.depart["slow"][0]=data["departures"][0]
-        self.depart["slow"][1]=data["departures"][1]
-        self.depart["fast"][0]=data["departures"][2]
-        self.depart["fast"][1]=data["departures"][3]
-
-        self.arrival["slow"][0]=data["arrivals"][0]
-        self.arrival["slow"][1]=data["arrivals"][1]
-        self.arrival["fast"][0]=data["arrivals"][2]
-        self.arrival["fast"][1]=data["arrivals"][3]
-
-        if time>0:
-            self.prices["internal"].append(price["internal"])
-            self.prices["external_sale"].append(price["external_sale"])
-            self.prices["external_purchase"].append(price["external_purchase"])
-
-            self.imbalance.append(imbalance)
-        self.nb_cars(time)
-
-
-    def reset(self):
-        self.bill = np.zeros(self.nb_t)
-        self.load = np.zeros(self.nb_t)
-        self.load_battery_periode = {"fast" : np.zeros((self.nb_t,2)),"slow" : np.zeros((self.nb_t,2))}
-        self.battery_stock = {"slow" : np.zeros((self.nb_t+1,2)), "fast" : np.zeros((self.nb_t+1,2))}
-        self.nb_slow = 2
-        self.nb_fast = 2
-        self.here = {"slow" : np.ones(2), "fast" : np.ones(2)}
-        self.depart = {"slow" : np.zeros(2), "fast" : np.zeros(2)}
-        self.arrival = {"slow" : np.zeros(2), "fast" : np.zeros(2)}
-        self.prices = {"internal" : [],"external_purchase" : [],"external_sale" : []}
-        self.imbalance=[]
-
-    def compute_load(self,time):
+    def compute_load(self,time,data_useless):
         load_battery = self.take_decision(time) # How you charge or discharge is the players choice
         load = self.update_battery_stock(time, load_battery)
         for i in range(2):
             self.load[time] += load["slow"][i] + load["fast"][i]
         self.penalty(time)
         return self.load[time]
+
+
+    def observe(self, time, data, price, imbalance):
+
+        for i in range(4):   #the players discovers in live if the car is leaving or returning in the station
+            if data["departures"][i]==1 and i<2:
+                self.depart["slow"][i]=time
+            if data["departures"][i]==1 and i>1:
+                self.depart["fast"][i-2]=time
+
+            if data["arrivals"][i]==1 and i<2:
+                self.arrival["slow"][i]=time
+            if data["arrivals"][i]==1 and i>1:
+                self.arrival["fast"][i-2]=time
+
+        self.prices["internal"].append(price["internal"])
+        self.prices["external_sale"].append(price["external_sale"])
+        self.prices["external_purchase"].append(price["external_purchase"])
+
+        self.imbalance.append(imbalance)
+
+
+    def reset(self):
+        self.bill = np.zeros(self.horizon)
+        self.load = np.zeros(self.horizon)
+        self.load_battery_periode = {"fast" : np.zeros((self.horizon,2)),"slow" : np.zeros((self.horizon,2))}
+        self.battery_stock = {"slow" : np.zeros((self.horizon+1,2)), "fast" : np.zeros((self.horizon+1,2))}
+        self.nb_slow = 2
+        self.nb_fast = 2
+        self.here = {"slow" : np.ones(2), "fast" : np.ones(2)}
+        self.depart = {"slow" : np.array([self.horizon-1,self.horizon-1]), "fast" : np.array([self.horizon-1,self.horizon-1])}
+        self.arrival = {"slow" : np.array([self.horizon-1,self.horizon-1]), "fast" : np.array([self.horizon-1,self.horizon-1])}
+        self.prices = {"internal" : [],"external_purchase" : [],"external_sale" : []}
+        self.imbalance=[]
+
+
