@@ -31,27 +31,31 @@ class Player:
         self.p_station = 0
 
     def update_battery_stock(self,time,load_battery):
+
         self.nb_cars(time) # We check what cars is here
+
         p_max = {"slow" : [3*self.here["slow"][0],3*self.here["slow"][1]], "fast" : [22*self.here["fast"][0],22*self.here["fast"][1]]}
+
         c_max = {"slow" : [40*self.here["slow"][0],40*self.here["slow"][1]], "fast" : [40*self.here["fast"][0],40*self.here["fast"][1]]}
+
         # p_max and c_max depend on whether the car is here or not.
         self.p_station = 0
         for speed in ["slow","fast"] :
             for i in range(2):
-                if abs(load_battery[speed][i]) >= p_max[speed][i]:
+                if abs(load_battery[speed][i]) > p_max[speed][i]:
                     load_battery[speed][i] = p_max[speed][i]*np.sign(load_battery[speed][i])
             # Can't put more power than p_max
 
 
-            new_stock = { "slow" : [0,0], "fast" : [0,0] }
+        new_stock = { "slow" : [0,0], "fast" : [0,0] }
 
-            new_stock["slow"][0] = self.battery_stock["slow"][time][0] + (self.efficiency*max(0,load_battery["slow"][0])+min(0,load_battery["slow"][0])/self.efficiency)*self.dt
-            new_stock["slow"][1] = self.battery_stock["slow"][time][1] + (self.efficiency*max(0,load_battery["slow"][1])+min(0,load_battery["slow"][1])/self.efficiency)*self.dt
-            # We update the new stock of each batteries "slow"
+        new_stock["slow"][0] = self.battery_stock["slow"][time][0] + (self.efficiency*max(0,load_battery["slow"][0])+min(0,load_battery["slow"][0])/self.efficiency)*self.dt
+        new_stock["slow"][1] = self.battery_stock["slow"][time][1] + (self.efficiency*max(0,load_battery["slow"][1])+min(0,load_battery["slow"][1])/self.efficiency)*self.dt
+        # We update the new stock of each batteries "slow"
 
-            new_stock["fast"][0]=self.battery_stock["fast"][time][0] + (self.efficiency*max(0,load_battery["fast"][0])+min(0,load_battery["fast"][0])/self.efficiency)*self.dt
-            new_stock["fast"][1]=self.battery_stock["fast"][time][1] + (self.efficiency*max(0,load_battery["fast"][1])+min(0,load_battery["fast"][1])/self.efficiency)*self.dt
-            # We update the new stock of each batteries "fast"
+        new_stock["fast"][0]=self.battery_stock["fast"][time][0] + (self.efficiency*max(0,load_battery["fast"][0])+min(0,load_battery["fast"][0])/self.efficiency)*self.dt
+        new_stock["fast"][1]=self.battery_stock["fast"][time][1] + (self.efficiency*max(0,load_battery["fast"][1])+min(0,load_battery["fast"][1])/self.efficiency)*self.dt
+        # We update the new stock of each batteries "fast"
 
 
         for speed in ["slow","fast"] :
@@ -68,7 +72,7 @@ class Player:
 
         for speed in ["slow","fast"] :
             for i in range(2):
-                if abs(load_battery[speed][i]) >= p_max[speed][i]:
+                if abs(load_battery[speed][i]) > p_max[speed][i]:
                     load_battery[speed][i] = p_max[speed][i]*np.sign(load_battery[speed][i])
             # Can't put more power than p_max
                 self.p_station += load_battery[speed][i]
@@ -78,11 +82,13 @@ class Player:
             #Can't put more power than the station can take : pmax_station = 40
         for speed in ["slow","fast"] :
             for i in range(2):
+                if self.here[speed][i]==0:
+                    new_stock[speed][i]=self.battery_stock[speed][time][i]
+                if time == self.arrival[speed][i]:
+                    new_stock[speed][i] = self.battery_stock[speed][time][i]-4
+                    # When the cars comes back it has lost 4 kWh in the battery
                 self.battery_stock[speed][time+1][i]=new_stock[speed][i]
             # Update of batteries stocks
-                if time == self.arrival[speed][i]-1:
-                    self.battery_stock[speed][time+1][i] = self.battery_stock[speed][int(self.depart[speed][i])][i]-4
-                    # When the cars comes back it has lost 4 kWh in the battery
                 self.load_battery_periode[speed][time][i] = load_battery[speed][i]
 
         return load_battery # We return load_battery clear of the player's potential mistakes
@@ -119,7 +125,14 @@ class Player:
 
 
     def take_decision(self, time):
-        load_battery = {"fast" : 20*np.ones(2),"slow" : 5*np.ones(2)}
+        #Exemple : simple politics
+        load_battery = {"fast" : 20*np.zeros(2),"slow" : 5*np.zeros(2)}
+        if time<6*2:
+            load_battery = {"fast" : 17*np.ones(2),"slow" : 3*np.ones(2)}
+            #From 0 am to 6 am we charge as fast as we can
+        if time>18*2:
+            load_battery = {"fast" : -17*np.ones(2),"slow" : -3*np.ones(2)}
+            #From 6 pm to 12pm we sell the stock we have
         # TO BE COMPLETED
         # Be carefull if the sum in load_battery is over pmax_station = 40 then the cars wont be charged as you want.
         # Have to return load_battery to put in update_batterie_stock to get the load.
@@ -168,5 +181,6 @@ class Player:
         self.arrival = {"slow" : np.array([self.horizon-1,self.horizon-1]), "fast" : np.array([self.horizon-1,self.horizon-1])}
         self.prices = {"internal" : [],"external_purchase" : [],"external_sale" : []}
         self.imbalance=[]
+        self.p_station = 0
 
 
