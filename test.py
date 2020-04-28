@@ -3,30 +3,26 @@ import os
 from numpy.random import randint
 from player import Player
 
-Player = Player()
+player = Player()
 
 for t in range(48):
-    load = Player.compute_load(t,{"departures" : [1,1,1,1],"arrivals": [0,0,0,0]})
+    load = player.compute_load(t,{"departures" : [1,1,1,1],"arrivals": [0,0,0,0]})
     if t==12:
-        load = Player.compute_load(t,{"departures" : [1,1,1,1],"arrivals": [0,0,0,0]})
+        load = player.compute_load(t,{"departures" : [1,1,1,1],"arrivals": [0,0,0,0]})
     elif t==36:
-        load = Player.compute_load(t,{"departures" : [0,0,0,0],"arrivals": [1,1,1,1]})
+        load = player.compute_load(t,{"departures" : [0,0,0,0],"arrivals": [1,1,1,1]})
     else:
-        load = Player.compute_load(t,{"departures" : [0,0,0,0],"arrivals": [0,0,0,0]})
+        load = player.compute_load(t,{"departures" : [0,0,0,0],"arrivals": [0,0,0,0]})
 
-    Player.penalty(t)
-    print(load)
-
-print(Player.depart)
-print(Player.arrival)
-print("load",Player.load_battery_periode)
-print(Player.bill)
-print(Player.battery_stock)
-print(Player.depart)
-
-new_bat = np.concatenate((Player.battery_stock["slow"],Player.battery_stock["fast"]),axis=1)
-new_bat = np.transpose(new_bat)
-print(new_bat)
-
+    soc = player.battery_stock
+    assert soc['slow'][t][0] >= 0
+    assert soc['slow'][t][0] <= 40
+    assert soc['slow'][t][1] >= 0
+    assert soc['slow'][t][1] <= 40
+    assert soc['fast'][t][0] >= 0
+    assert soc['fast'][t][0] <= 40
+    assert soc['fast'][t][1] >= 0
+    assert soc['fast'][t][1] <= 40
+    player.penalty(t)
 
 print("tests passed !")
