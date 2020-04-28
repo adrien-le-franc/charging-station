@@ -1,0 +1,4 @@
+*
+!.gitignore
+!player.py
+!test.py
