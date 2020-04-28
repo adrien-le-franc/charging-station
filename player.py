@@ -140,16 +140,7 @@ class Player:
         return load_battery
 
 
-    def compute_load(self,time,data_useless):
-        load_battery = self.take_decision(time) # How you charge or discharge is the players choice
-        load = self.update_battery_stock(time, load_battery)
-        for i in range(2):
-            self.load[time] += load["slow"][i] + load["fast"][i]
-        self.penalty(time)
-        return self.load[time]
-
-
-    def observe(self, time, data, price, imbalance):
+    def compute_load(self,time,data):
 
         for i in range(4):   #the players discovers in live if the car is leaving or returning in the station
             if data["departures"][i]==1 and i<2:
@@ -162,6 +153,16 @@ class Player:
             if data["arrivals"][i]==1 and i>1:
                 self.arrival["fast"][i-2]=time
 
+        load_battery = self.take_decision(time) # How you charge or discharge is the players choice
+        load = self.update_battery_stock(time, load_battery)
+        for i in range(2):
+            self.load[time] += load["slow"][i] + load["fast"][i]
+        self.penalty(time)
+        return self.load[time]
+
+
+    def observe(self, time, data, price, imbalance):
+
         self.prices["internal"].append(price["internal"])
         self.prices["external_sale"].append(price["external_sale"])
         self.prices["external_purchase"].append(price["external_purchase"])
@@ -173,7 +174,13 @@ class Player:
         self.bill = np.zeros(self.horizon)
         self.load = np.zeros(self.horizon)
         self.load_battery_periode = {"fast" : np.zeros((self.horizon,2)),"slow" : np.zeros((self.horizon,2))}
+
+        last_bat = {"slow": self.battery_stock["slow"][-1,:], "fast": self.battery_stock["fast"][-1,:]}
         self.battery_stock = {"slow" : np.zeros((self.horizon+1,2)), "fast" : np.zeros((self.horizon+1,2))}
+        self.battery_stock["slow"][0] = last_bat["slow"]
+        self.battery_stock["fast"][0] = last_bat["fast"]
+
+
         self.nb_slow = 2
         self.nb_fast = 2
         self.here = {"slow" : np.ones(2), "fast" : np.ones(2)}
