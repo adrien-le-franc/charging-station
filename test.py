@@ -16,7 +16,6 @@ for t in range(48):
 
     player.compute_load(t, data)
     prices = {"purchase" : [0.06],"sale" : [0.03]}
-    {"purchase_cover":[], "sale_cover": []}
     imbalance = {"purchase_cover":[0.02], "sale_cover": [0.02]}
     player.observe(t, data, prices, imbalance)
 
