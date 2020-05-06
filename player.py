@@ -10,7 +10,7 @@ class Player:
     def __init__(self):
         self.dt = 0.5
         self.horizon = int(24/self.dt)
-        self.prices = {"internal" : [],"external_purchase" : [],"external_sale" : []}
+        self.prices = {"purchase" : [],"sale" : []}
         self.efficiency = 0.95
         self.bill = np.zeros(self.horizon) # Where 5e penalities will be stocked
         self.load = np.zeros(self.horizon) # List l4
@@ -26,7 +26,7 @@ class Player:
         self.depart = {"slow" : np.array([self.horizon-1,self.horizon-1]), "fast" : np.array([self.horizon-1,self.horizon-1])} # Time of departure of every cars, initialize at the end of the day
         self.arrival = {"slow" : np.array([self.horizon-1,self.horizon-1]), "fast" : np.array([self.horizon-1,self.horizon-1])} # Time of arrival of every cars, initialize at the end of the day
         self.here = {"slow" : np.ones(2), "fast" : np.ones(2)}
-        self.imbalance=[]
+        self.imbalance={"purchase_cover":[], "sale_cover": []}
         self.pmax_station = 40
         self.p_station = 0
 
@@ -164,11 +164,11 @@ class Player:
 
     def observe(self, time, data, price, imbalance):
 
-        self.prices["internal"].append(price["internal"])
-        self.prices["external_sale"].append(price["external_sale"])
-        self.prices["external_purchase"].append(price["external_purchase"])
+        self.prices["purchase"].append(price["purchase"])
+        self.prices["sale"].append(price["sale"])
 
-        self.imbalance.append(imbalance)
+        self.imbalance["purchase_cover"].append(imbalance["purchase_cover"])
+        self.imbalance["sale_cover"].append(imbalance["sale_cover"])
 
 
     def reset(self):
@@ -187,8 +187,8 @@ class Player:
         self.here = {"slow" : np.ones(2), "fast" : np.ones(2)}
         self.depart = {"slow" : np.array([self.horizon-1,self.horizon-1]), "fast" : np.array([self.horizon-1,self.horizon-1])}
         self.arrival = {"slow" : np.array([self.horizon-1,self.horizon-1]), "fast" : np.array([self.horizon-1,self.horizon-1])}
-        self.prices = {"internal" : [],"external_purchase" : [],"external_sale" : []}
-        self.imbalance=[]
+        self.prices = {"purchase" : [],"sale" : []}
+        self.imbalance={"purchase_cover":[], "sale_cover": []}
         self.p_station = 0
 
 
