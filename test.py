@@ -15,8 +15,8 @@ for t in range(48):
         data = {"departures" : [0,0,0,0],"arrivals": [0,0,0,0]}
 
     player.compute_load(t, data)
-    prices = {"purchase" : [0.06],"sale" : [0.03]}
-    imbalance = {"purchase_cover":[0.02], "sale_cover": [0.02]}
+    prices = {"purchase" : 0.06,"sale" : 0.03}
+    imbalance = {"purchase_cover":0.02, "sale_cover": 0.02}
     player.observe(t, data, prices, imbalance)
 
     soc = player.battery_stock
