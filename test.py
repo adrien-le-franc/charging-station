@@ -6,7 +6,7 @@ from player import Player
 player = Player()
 
 for t in range(48):
-    
+
     if t==12:
         data = {"departures" : [1,1,1,1],"arrivals": [0,0,0,0]}
     elif t==36:
@@ -15,8 +15,8 @@ for t in range(48):
         data = {"departures" : [0,0,0,0],"arrivals": [0,0,0,0]}
 
     player.compute_load(t, data)
-    prices = {"internal" : 0.06 ,"external_purchase" : 0.1,"external_sale" : 0.03}
-    imbalance = {"demand" : 0.5 , "supply" : 1}
+    prices = {"purchase" : 0.06,"sale" : 0.03}
+    imbalance = {"purchase_cover":0.02, "sale_cover": 0.02}
     player.observe(t, data, prices, imbalance)
 
     soc = player.battery_stock
