@@ -17,7 +17,8 @@ for t in range(48):
     player.compute_load(t, data)
     prices = {"purchase" : 0.06,"sale" : 0.03}
     imbalance = {"purchase_cover":0.02, "sale_cover": 0.02}
-    player.observe(t, data, prices, imbalance)
+    grid_relative_load=100
+    player.observe(t, data, prices, imbalance,grid_relative_load)
 
     soc = player.battery_stock
     assert soc['slow'][t][0] >= 0
@@ -28,6 +29,6 @@ for t in range(48):
     assert soc['fast'][t][0] <= 40
     assert soc['fast'][t][1] >= 0
     assert soc['fast'][t][1] <= 40
-    player.penalty(t)
+    player.compute_penalty(t)
 
 print("tests passed !")
