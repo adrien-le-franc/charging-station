@@ -13,6 +13,8 @@ class Player:
         self.prices = {"purchase" : [],"sale" : []}
         self.efficiency = 0.95
         self.bill = np.zeros(self.horizon) # Where 5e penalities will be stocked
+        self.penalty=np.zeros(self.horizon)
+        self.grid_relative_load=np.zeros(self.horizon)
         self.load = np.zeros(self.horizon) # List l4
         self.load_battery_periode = {"fast" : np.zeros((self.horizon,2)),"slow" : np.zeros((self.horizon,2))} # How the player wants to charge/discharge the veicules
         self.battery_stock = {"slow" : np.zeros((self.horizon+1,2)), "fast" : np.zeros((self.horizon+1,2))} # State of the batteries
@@ -134,11 +136,13 @@ class Player:
         # Acctualise how many cars and which are at the station at t = time.
 
 
-    def penalty(self,time):
+    def compute_penalty(self,time):
         for speed in ["slow","fast"] :
             for i in range(2):
                 if time == self.depart[speed][i] and self.battery_stock[speed][time][i]/40 < 0.25:
                     self.bill[time]+=5
+                    self.penalty[time]+=5
+
         # If at the departure time of the veicule its battery isn't charged at least at 25% then you pay a 5e fine
 
     def compute_load(self,time,data):
@@ -158,21 +162,24 @@ class Player:
         load = self.update_battery_stock(time, load_battery)
         for i in range(2):
             self.load[time] += load["slow"][i] + load["fast"][i]
-        self.penalty(time)
+        self.compute_penalty(time)
         return self.load[time]
 
 
-    def observe(self, time, data, price, imbalance):
+    def observe(self, time, data, price, imbalance,grid_relative_load):
 
         self.prices["purchase"].append(price["purchase"])
         self.prices["sale"].append(price["sale"])
 
         self.imbalance["purchase_cover"].append(imbalance["purchase_cover"])
         self.imbalance["sale_cover"].append(imbalance["sale_cover"])
-
+        
+        self.grid_relative_load[time]=grid_relative_load
 
     def reset(self):
         self.bill = np.zeros(self.horizon)
+        self.penalty=np.zeros(self.horizon)
+        self.grid_relative_load=np.zeros(self.horizon)
         self.load = np.zeros(self.horizon)
         self.load_battery_periode = {"fast" : np.zeros((self.horizon,2)),"slow" : np.zeros((self.horizon,2))}
 
